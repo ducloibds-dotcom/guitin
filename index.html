@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gửi mail hàng loạt C10V11 · Đức Lợi</title>
+<title>Gửi mail hàng loạt C12V12 · Đức Lợi</title>
 <style>
   :root{
     --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3248;
@@ -242,6 +242,24 @@
     border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;
   }
 
+  /* Nút đồng bộ cloud */
+  .btn-sync-cloud{
+    background:var(--surface2);border:1px solid var(--accent);color:var(--accent);
+    border-radius:var(--radius-sm);padding:7px 11px;font-size:12px;font-weight:600;
+    cursor:pointer;white-space:nowrap;
+  }
+  .btn-sync-cloud:active{background:var(--accent-soft);}
+  .btn-sync-cloud.syncing{opacity:.6;pointer-events:none;}
+
+  /* Sync status bar */
+  .sync-status-bar{
+    padding:8px 16px;font-size:12px;font-weight:600;flex-shrink:0;
+    border-bottom:1px solid var(--border);
+  }
+  .sync-status-bar.ok{background:var(--accent2-soft);color:var(--accent2);}
+  .sync-status-bar.err{background:var(--red-bg);color:var(--red);}
+  .sync-status-bar.loading{background:var(--accent-soft);color:var(--accent);}
+
   /* Import JS file */
   .import-js-wrap{
     display:flex;align-items:center;gap:8px;padding:10px 16px;
@@ -267,7 +285,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-text">
-      <h1>✦ Gửi mail hàng loạt C10V11</h1>
+      <h1>✦ Gửi mail hàng loạt C12V12</h1>
       <p>Kenyo · Đức Lợi</p>
     </div>
     <button class="btn-history-top" onclick="openHistorySheet()">
@@ -281,7 +299,7 @@
     <div class="field">
       <label>Mã xác thực (X-Admin-Key)</label>
       <input type="password" id="adminKey" placeholder="Nhập key bí mật..." autocomplete="off">
-      <div class="hint-text">Lưu trong tab này (đóng tab là mất). Lịch sử gửi lưu trên máy này — dùng nút Xuất .js để chuyển sang điện thoại khác.</div>
+      <div class="hint-text">Lưu trong tab này (đóng tab là mất). Lịch sử gửi được <strong style="color:var(--accent2)">đồng bộ tự động qua cloud</strong> — mở trên điện thoại hay máy tính khác đều thấy đủ.</div>
     </div>
   </div>
 
@@ -391,8 +409,14 @@
     <div class="sheet-handle"></div>
     <div class="sheet-head">
       <div class="sheet-title">🕓 Lịch sử</div>
+      <button class="btn-sync-cloud" id="btnSyncCloud" onclick="syncFromCloud()">☁️ Đồng bộ</button>
       <button class="btn-export-js" onclick="exportHistoryJs()">⬇️ Xuất .js</button>
       <button class="sheet-close" onclick="closeHistorySheet()">Đóng</button>
+    </div>
+
+    <!-- Sync status bar -->
+    <div class="sync-status-bar" id="syncStatusBar" style="display:none">
+      <span id="syncStatusText"></span>
     </div>
 
     <!-- Import file .js -->
@@ -410,12 +434,14 @@
 
 <script>
 /* ─────────────────────────────────────────────────────────────
-   KENYO Gửi mail hàng loạt C10V11 · Đức Lợi
-   Lịch sử: localStorage (key = KENYO_BULK_HISTORY)
-             + xuất/nhập file .js trên máy
-   Không còn gọi /bulk-history trên worker.
+   KENYO Gửi mail hàng loạt C12V12 · Đức Lợi
+   Lịch sử: localStorage (cache offline)
+           + KV Cloud qua Dongbomokhoa worker (đồng bộ đa thiết bị)
+   Chiến lược: sau mỗi lần gửi → save lên cloud ngay
+               khi mở sheet  → auto sync từ cloud về local
 ───────────────────────────────────────────────────────────── */
-const WORKER_URL  = "https://kenyo-email.ducloibds.workers.dev";
+const WORKER_URL       = "https://kenyo-email.ducloibds.workers.dev";
+const SYNC_WORKER_URL  = "https://dongbomokhoa.ducloibds.workers.dev"; // Worker đồng bộ mở khóa
 const BATCH_SIZE  = 8;
 const BATCH_PAUSE = 3000;
 const MIN_DELAY   = 1000;
@@ -516,6 +542,119 @@ function importHistoryJs(input) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   CLOUD SYNC HELPERS
+═══════════════════════════════════════════════════════════ */
+
+// Hiện thông báo trạng thái sync
+function showSyncStatus(msg, type /* 'ok'|'err'|'loading' */) {
+  const bar  = document.getElementById('syncStatusBar');
+  const text = document.getElementById('syncStatusText');
+  bar.className  = `sync-status-bar ${type}`;
+  text.textContent = msg;
+  bar.style.display = 'block';
+  if (type === 'ok') setTimeout(() => { bar.style.display = 'none'; }, 3000);
+}
+
+// Lấy adminKey hiện tại (dùng làm định danh cloud)
+function getAdminKey() {
+  return document.getElementById('adminKey').value.trim();
+}
+
+// Lưu 1 record mới lên cloud (gọi sau mỗi lần gửi xong)
+async function cloudSaveRecord(record) {
+  const adminKey = getAdminKey();
+  if (!adminKey) return; // Không có key → bỏ qua, chỉ lưu local
+  try {
+    await fetch(SYNC_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'bulk-history-save', adminKey, record }),
+    });
+    // Không chặn UI dù lỗi — local đã lưu rồi
+  } catch (e) {
+    console.warn('[Cloud] Không lưu được lịch sử lên cloud:', e);
+  }
+}
+
+// Kéo toàn bộ lịch sử từ cloud về, merge với local
+async function syncFromCloud() {
+  const adminKey = getAdminKey();
+  if (!adminKey) {
+    showSyncStatus('⚠️ Nhập Admin Key trước để đồng bộ.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btnSyncCloud');
+  btn.classList.add('syncing');
+  btn.textContent = '⏳ Đang tải...';
+  showSyncStatus('☁️ Đang kéo dữ liệu từ cloud...', 'loading');
+
+  try {
+    const res = await fetch(SYNC_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'bulk-history-list', adminKey, limit: 50 }),
+    });
+
+    if (res.status === 401) {
+      showSyncStatus('❌ Admin Key không hợp lệ.', 'err');
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.records || !Array.isArray(data.records)) {
+      showSyncStatus('❌ Cloud trả dữ liệu không hợp lệ.', 'err');
+      return;
+    }
+
+    const cloudRecords = data.records;
+    if (cloudRecords.length === 0) {
+      showSyncStatus('☁️ Cloud chưa có bản ghi nào.', 'ok');
+      return;
+    }
+
+    // Merge: gộp cloud + local, bỏ trùng theo ts
+    const local    = lsLoad();
+    const localTs  = new Set(local.map(h => h.ts));
+    const newItems = cloudRecords.filter(h => h.ts && !localTs.has(h.ts));
+    const merged   = [...newItems, ...local]
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+      .slice(0, MAX_HISTORY);
+
+    lsSave(merged);
+    historyCache = merged;
+    updateHistoryDot();
+    renderHistoryList();
+
+    const msg = newItems.length > 0
+      ? `✅ Đồng bộ xong · Thêm ${newItems.length} bản ghi mới từ cloud`
+      : `✅ Đã cập nhật · Không có bản ghi mới (tổng ${merged.length})`;
+    showSyncStatus(msg, 'ok');
+
+  } catch (e) {
+    showSyncStatus('❌ Lỗi kết nối tới cloud: ' + e.message, 'err');
+  } finally {
+    btn.classList.remove('syncing');
+    btn.textContent = '☁️ Đồng bộ';
+  }
+}
+
+// Xoá 1 bản ghi trên cloud
+async function cloudDeleteRecord(ts) {
+  const adminKey = getAdminKey();
+  if (!adminKey || !ts) return;
+  try {
+    await fetch(SYNC_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'bulk-history-delete', adminKey, ts: String(ts) }),
+    });
+  } catch (e) {
+    console.warn('[Cloud] Không xoá được bản ghi cloud:', e);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    HISTORY: MỞ / ĐÓNG SHEET
 ═══════════════════════════════════════════════════════════ */
 function openHistorySheet() {
@@ -523,6 +662,8 @@ function openHistorySheet() {
   updateHistoryDot();
   renderHistoryList();
   document.getElementById('historySheet').classList.add('show');
+  // Auto sync từ cloud khi mở sheet (nếu có key)
+  if (getAdminKey()) syncFromCloud();
 }
 
 function closeHistorySheet() {
@@ -626,16 +767,19 @@ function saveHistoryEdit(i) {
   renderHistoryList();
 }
 
-/* Xoá 1 bản — lưu lại localStorage ngay */
+/* Xoá 1 bản — lưu lại localStorage + xoá cloud */
 function deleteHistoryItem(i) {
   if (!confirm('Xoá bản lịch sử này? Không thể hoàn tác.')) return;
+  const ts = historyCache[i]?.ts;
   historyCache.splice(i, 1);
   lsSave(historyCache);
   updateHistoryDot();
   renderHistoryList();
+  // Xoá cloud không đồng bộ
+  if (ts) cloudDeleteRecord(ts);
 }
 
-/* Lưu 1 bản mới vào đầu danh sách */
+/* Lưu 1 bản mới vào đầu danh sách + đẩy lên cloud */
 function saveCurrentToHistory(note, link, type, typeLabel, sentLeads, okCount, errCount) {
   const record = {
     ts:         Date.now(),
@@ -651,6 +795,8 @@ function saveCurrentToHistory(note, link, type, typeLabel, sentLeads, okCount, e
   historyCache = [record, ...lsLoad()].slice(0, MAX_HISTORY);
   lsSave(historyCache);
   updateHistoryDot();
+  // Đẩy lên cloud không đồng bộ (không chặn UI)
+  cloudSaveRecord(record);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -954,6 +1100,7 @@ function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
 
 /* ═══════════════════════════════════════════════════════════
    INIT: đọc lịch sử từ localStorage khi tải trang
+   Cloud sync sẽ chạy khi người dùng mở sheet Lịch sử
 ═══════════════════════════════════════════════════════════ */
 (function init() {
   historyCache = lsLoad();
