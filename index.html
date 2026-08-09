@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gửi mail hàng loạt C10V11 · Đức Lợi</title>
+<style>
+  :root{
+    --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3248;
+    --accent:#3b82f6;--accent-soft:rgba(59,130,246,0.12);--accent2:#10b981;
+    --accent2-soft:rgba(16,185,129,0.12);
+    --text:#e8eaf0;--text-muted:#7b82a0;--text-dim:#4a5070;
+    --tag-wl:#f59e0b;--tag-wl-bg:rgba(245,158,11,0.12);
+    --red:#ef4444;--red-bg:rgba(239,68,68,0.12);
+    --radius:12px;--radius-sm:8px;
+    --safe-b:env(safe-area-inset-bottom, 0px);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    min-height:100vh;min-height:100dvh;
+    padding:16px 12px calc(90px + var(--safe-b));
+  }
+  .page{max-width:640px;margin:0 auto;}
+
+  /* Header */
+  .header{
+    background:linear-gradient(135deg,var(--surface2),var(--surface));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:14px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .header-text h1{font-size:17px;font-weight:700;letter-spacing:-.2px;}
+  .header-text p{font-size:12px;color:var(--text-muted);margin-top:3px;}
+  .btn-history-top{
+    background:var(--surface2);border:1px solid var(--border);color:var(--text);
+    border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;font-weight:600;
+    display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;flex-shrink:0;
+    position:relative;
+  }
+  .btn-history-top:active{background:var(--surface);}
+  .history-count-dot{
+    background:var(--accent2);color:#04241a;border-radius:20px;font-size:10px;font-weight:800;
+    padding:1px 6px;min-width:16px;text-align:center;
+  }
+
+  /* Card */
+  .card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;margin-bottom:12px;
+  }
+  .card-title{
+    font-size:11px;font-weight:700;color:var(--text-muted);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;
+    display:flex;align-items:center;gap:6px;
+  }
+
+  label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+  input[type=text],input[type=url],input[type=password],select,textarea{
+    width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+    font-size:16px;
+    font-family:inherit;color:var(--text);background:var(--surface2);
+    transition:border-color .15s;-webkit-appearance:none;
+  }
+  input::placeholder,textarea::placeholder{color:var(--text-dim);}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .hint-text{font-size:12px;color:var(--text-dim);margin-top:6px;line-height:1.5;}
+
+  /* Radio loại intro */
+  .radio-group{display:grid;grid-template-columns:1fr;gap:8px;}
+  @media (min-width:520px){ .radio-group{grid-template-columns:1fr 1fr;} }
+  .radio-label{
+    display:flex;align-items:center;gap:10px;padding:13px 14px;
+    border:1.5px solid var(--border);border-radius:var(--radius-sm);
+    cursor:pointer;font-size:14px;font-weight:500;color:var(--text-muted);
+    transition:border-color .15s,background .15s,color .15s;
+    background:var(--surface2);user-select:none;
+  }
+  .radio-label:has(input:checked){
+    border-color:var(--accent2);background:var(--accent2-soft);color:var(--text);
+  }
+  .radio-label input{accent-color:var(--accent2);width:16px;height:16px;flex-shrink:0;margin:0;}
+
+  /* Tab nhập liệu */
+  .tab-bar{display:flex;gap:8px;margin-bottom:12px;}
+  .tab-btn{
+    flex:1;padding:10px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);
+    font-size:13px;font-weight:600;cursor:pointer;background:var(--surface2);
+    color:var(--text-muted);transition:all .15s;
+  }
+  .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  textarea.list-input{
+    min-height:130px;resize:vertical;font-family:'SF Mono',Menlo,Consolas,monospace;
+    font-size:13px;line-height:1.7;
+  }
+
+  /* File upload */
+  .file-drop{
+    border:2px dashed var(--border);border-radius:var(--radius-sm);
+    padding:26px 16px;text-align:center;cursor:pointer;
+    transition:border-color .15s,background .15s;position:relative;background:var(--surface2);
+  }
+  .file-drop.dragover{border-color:var(--accent);background:var(--accent-soft);}
+  .file-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .file-drop-icon{font-size:26px;margin-bottom:6px;}
+  .file-drop-text{font-size:13px;color:var(--text-muted);}
+  .file-drop-text strong{color:var(--accent2);}
+
+  /* Bảng preview */
+  .preview-wrap{
+    overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px;
+    border-radius:var(--radius-sm);border:1px solid var(--border);display:none;
+  }
+  .preview-wrap.show{display:block;}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:420px;}
+  thead{background:var(--surface2);}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+  th{font-weight:700;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+  td{color:var(--text);}
+  tr:last-child td{border-bottom:none;}
+  .badge-ok{background:var(--accent2-soft);color:var(--accent2);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-err{background:var(--red-bg);color:var(--red);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-pending{background:var(--surface2);color:var(--text-muted);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-sending{background:var(--tag-wl-bg);color:var(--tag-wl);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+
+  .btn-outline{
+    padding:11px 16px;border-radius:var(--radius-sm);border:1.5px solid var(--border);
+    background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;
+    transition:all .15s;width:100%;
+  }
+  .btn-outline:active{background:var(--border);}
+
+  /* Nút gửi cố định */
+  .send-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:linear-gradient(180deg,rgba(15,17,23,0),var(--bg) 20%);
+    padding:16px 12px calc(16px + var(--safe-b));
+  }
+  .send-bar-inner{max-width:640px;margin:0 auto;}
+  .btn-send{
+    width:100%;padding:16px;background:var(--accent2);color:#04241a;border:none;
+    border-radius:var(--radius);font-size:16px;font-weight:800;cursor:pointer;
+    transition:opacity .15s;box-shadow:0 4px 20px rgba(16,185,129,.35);
+  }
+  .btn-send:disabled{opacity:.5;box-shadow:none;}
+
+  /* Progress */
+  .progress-card{display:none;}
+  .progress-card.show{display:block;}
+  .progress-bar-wrap{background:var(--surface2);border-radius:99px;height:10px;margin:12px 0 8px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:var(--accent2);border-radius:99px;width:0%;transition:width .3s ease;}
+  .progress-label{font-size:13px;color:var(--text);display:flex;justify-content:space-between;font-weight:600;}
+  .progress-speed{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  .progress-status{font-size:13px;color:var(--accent2);font-weight:700;margin-top:8px;min-height:20px;}
+
+  /* Kết quả */
+  .result-card{display:none;}
+  .result-card.show{display:block;}
+  .result-summary{display:flex;gap:10px;margin-bottom:14px;}
+  .result-box{flex:1;padding:14px;border-radius:var(--radius-sm);text-align:center;}
+  .result-box.ok{background:var(--accent2-soft);}
+  .result-box.err{background:var(--red-bg);}
+  .result-box .num{font-size:26px;font-weight:800;}
+  .result-box.ok .num{color:var(--accent2);}
+  .result-box.err .num{color:var(--red);}
+  .result-box .lbl{font-size:11px;font-weight:600;color:var(--text-muted);margin-top:2px;}
+
+  .note-field{margin-top:12px;}
+  .validate-msg{font-size:13px;color:var(--red);margin-top:8px;min-height:18px;}
+
+  /* Bottom sheet lịch sử */
+  .sheet-backdrop{
+    position:fixed;inset:0;background:rgba(10,11,16,.75);z-index:200;display:none;
+  }
+  .sheet-backdrop.show{display:block;}
+  .sheet-panel{
+    position:fixed;left:0;right:0;bottom:0;z-index:201;
+    background:var(--surface);border-radius:16px 16px 0 0;
+    max-height:82vh;display:flex;flex-direction:column;overflow:hidden;
+    transform:translateY(100%);transition:transform .25s ease;
+    padding-bottom:var(--safe-b);
+  }
+  .sheet-backdrop.show .sheet-panel{transform:translateY(0);}
+  .sheet-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+    gap:8px;
+  }
+  .sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 8px;}
+  .sheet-title{font-size:15px;font-weight:700;flex:1;}
+  .sheet-close{
+    background:transparent;border:1px solid var(--border);color:var(--text-muted);
+    border-radius:var(--radius-sm);padding:7px 13px;font-size:12px;cursor:pointer;
+    white-space:nowrap;
+  }
+  /* Nút xuất file JS trong header sheet */
+  .btn-export-js{
+    background:var(--surface2);border:1px solid var(--border);color:var(--tag-wl);
+    border-radius:var(--radius-sm);padding:7px 11px;font-size:12px;font-weight:600;
+    cursor:pointer;white-space:nowrap;
+  }
+  .btn-export-js:active{background:var(--border);}
+
+  .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 20px;flex:1;}
+
+  .hist-item{
+    background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:12px 13px;margin-bottom:10px;
+  }
+  .hist-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+  .hist-item-type{font-size:13px;font-weight:700;color:var(--text);}
+  .hist-item-time{font-size:11px;color:var(--text-dim);white-space:nowrap;}
+  .hist-item-note{font-size:12px;color:var(--text-muted);margin-bottom:6px;font-style:italic;}
+  .hist-item-meta{font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6;}
+  .hist-item-meta b{color:var(--accent2);}
+  .hist-item-meta b.err{color:var(--red);}
+  .hist-item-link{font-size:11px;color:var(--accent);word-break:break-all;margin-bottom:10px;display:block;}
+  .hist-item-actions{display:flex;gap:6px;}
+  .hist-action-btn{
+    flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .hist-action-btn.use{color:var(--accent2);border-color:rgba(16,185,129,.35);}
+  .hist-action-btn.edit{color:var(--tag-wl);border-color:rgba(245,158,11,.35);}
+  .hist-action-btn.del{color:var(--red);border-color:rgba(239,68,68,.35);}
+  .hist-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:30px 10px;}
+
+  /* Edit inline */
+  .hist-edit-area{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+  .hist-edit-area.show{display:block;}
+  .hist-edit-area textarea{min-height:90px;font-size:12px;font-family:monospace;}
+  .hist-edit-save{
+    margin-top:8px;width:100%;padding:9px;background:var(--accent);color:#fff;border:none;
+    border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;
+  }
+
+  /* Import JS file */
+  .import-js-wrap{
+    display:flex;align-items:center;gap:8px;padding:10px 16px;
+    border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2);
+  }
+  .import-js-wrap label{
+    font-size:12px;color:var(--text-muted);margin:0;font-weight:400;cursor:pointer;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;
+  }
+  .import-js-wrap input[type=file]{
+    width:0;height:0;opacity:0;position:absolute;
+  }
+  .btn-import-js{
+    background:var(--surface);border:1px solid var(--border);color:var(--accent);
+    border-radius:var(--radius-sm);padding:6px 11px;font-size:12px;font-weight:600;
+    cursor:pointer;white-space:nowrap;flex-shrink:0;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-text">
+      <h1>✦ Gửi mail hàng loạt C10V11</h1>
+      <p>Kenyo · Đức Lợi</p>
+    </div>
+    <button class="btn-history-top" onclick="openHistorySheet()">
+      🕓 Lịch sử <span class="history-count-dot" id="histCountDot" style="display:none">0</span>
+    </button>
+  </div>
+
+  <!-- Card 0: Admin Key -->
+  <div class="card">
+    <div class="card-title">🔑 Admin Key</div>
+    <div class="field">
+      <label>Mã xác thực (X-Admin-Key)</label>
+      <input type="password" id="adminKey" placeholder="Nhập key bí mật..." autocomplete="off">
+      <div class="hint-text">Lưu trong tab này (đóng tab là mất). Lịch sử gửi lưu trên máy này — dùng nút Xuất .js để chuyển sang điện thoại khác.</div>
+    </div>
+  </div>
+
+  <!-- Card 1: Thông tin BĐS -->
+  <div class="card">
+    <div class="card-title">1 · Thông tin BĐS</div>
+    <div class="field">
+      <label>Link BĐS</label>
+      <input type="url" id="bdsLink" placeholder="https://kenyo.vn/bat-dong-san/...">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Loại giới thiệu</label>
+      <div class="radio-group" id="introTypeGroup">
+        <label class="radio-label"><input type="radio" name="introType" value="price" checked> 🏷️ Cập nhật giá</label>
+        <label class="radio-label"><input type="radio" name="introType" value="video"> 🎥 Cập nhật video</label>
+        <label class="radio-label"><input type="radio" name="introType" value="doc"> 📄 Cập nhật sổ/pháp lý</label>
+        <label class="radio-label"><input type="radio" name="introType" value="product"> 🏠 Cập nhật sản phẩm</label>
+        <label class="radio-label"><input type="radio" name="introType" value="newproduct"> 🆕 Sản phẩm mới</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Danh sách khách -->
+  <div class="card">
+    <div class="card-title">2 · Danh sách khách</div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabBtnManual" onclick="switchTab('manual')">✏️ Nhập tay</button>
+      <button class="tab-btn" id="tabBtnCsv" onclick="switchTab('csv')">📂 Upload CSV</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-manual">
+      <textarea class="list-input" id="manualInput"
+        placeholder="0901234567, Nguyễn Văn A, nguyenvana@gmail.com
+0912345678, Trần Thị B, tranthib@gmail.com"></textarea>
+      <div class="hint-text">Mỗi dòng 1 người · Format: SĐT, Họ tên, Email</div>
+    </div>
+
+    <div class="tab-panel" id="tab-csv">
+      <div class="file-drop" id="fileDrop">
+        <input type="file" id="csvFile" accept=".csv,.txt">
+        <div class="file-drop-icon">📂</div>
+        <div class="file-drop-text">Chạm để chọn file <strong>hoặc kéo thả</strong></div>
+        <div class="hint-text" style="margin-top:6px">CSV · TXT · Format: SĐT, Họ tên, Email</div>
+      </div>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap">
+      <table>
+        <thead><tr><th>#</th><th>SĐT</th><th>Họ tên</th><th>Email</th><th>Trạng thái</th></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="validate-msg" id="validateMsg"></div>
+    <div style="margin-top:12px">
+      <button class="btn-outline" onclick="parseList()">🔍 Xem trước danh sách</button>
+    </div>
+  </div>
+
+  <!-- Card 3: Tuỳ chọn gửi -->
+  <div class="card">
+    <div class="card-title">3 · Tuỳ chọn</div>
+    <label class="radio-label" style="margin-bottom:10px">
+      <input type="checkbox" id="saveToKV"> <span>Lưu vào danh sách khách (khachvip_KV)</span>
+    </label>
+    <div class="hint-text" style="margin-top:-4px;margin-bottom:12px">Bỏ tick nếu đây là khách cũ đã có trong hệ thống</div>
+    <div class="field note-field">
+      <label>Ghi chú cho đợt gửi này (tuỳ chọn)</label>
+      <input type="text" id="sendNote" placeholder="VD: Khách VIP quý 3, list từ sự kiện...">
+      <div class="hint-text">Ghi chú này sẽ hiện trong mục Lịch sử.</div>
+    </div>
+    <div class="hint-text" style="margin-top:14px">Gửi tuần tự · Delay 1s/email · Nghỉ 3s mỗi 8 email · ~4.5 phút cho 200 người</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card progress-card" id="progressCard">
+    <div class="card-title">Đang gửi...</div>
+    <div class="progress-label"><span id="progressText">0 / 0</span><span id="progressPct">0%</span></div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-speed" id="progressSpeed"></div>
+    <div class="progress-status" id="progressStatus"></div>
+  </div>
+
+  <!-- Kết quả -->
+  <div class="card result-card" id="resultCard">
+    <div class="card-title">Kết quả</div>
+    <div class="result-summary">
+      <div class="result-box ok"><div class="num" id="resultOk">0</div><div class="lbl">Thành công</div></div>
+      <div class="result-box err"><div class="num" id="resultErr">0</div><div class="lbl">Thất bại</div></div>
+    </div>
+    <div id="errorDetail"></div>
+    <button class="btn-outline" onclick="resetAll()">🔄 Gửi đợt mới</button>
+  </div>
+
+  <div style="height:8px"></div>
+</div>
+
+<!-- Nút gửi cố định dưới cùng -->
+<div class="send-bar">
+  <div class="send-bar-inner">
+    <button class="btn-send" id="btnSend" onclick="startSend()">Gửi hàng loạt</button>
+  </div>
+</div>
+
+<!-- Bottom sheet Lịch sử -->
+<div class="sheet-backdrop" id="historySheet" onclick="if(event.target===this) closeHistorySheet()">
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">🕓 Lịch sử</div>
+      <button class="btn-export-js" onclick="exportHistoryJs()">⬇️ Xuất .js</button>
+      <button class="sheet-close" onclick="closeHistorySheet()">Đóng</button>
+    </div>
+
+    <!-- Import file .js -->
+    <div class="import-js-wrap">
+      <label for="importJsFile">📂 Nhập từ file .js</label>
+      <input type="file" id="importJsFile" accept=".js,.txt" onchange="importHistoryJs(this)">
+      <button class="btn-import-js" onclick="document.getElementById('importJsFile').click()">Chọn file</button>
+    </div>
+
+    <div class="sheet-body" id="historyBody">
+      <div class="hist-empty">Chưa có lịch sử gửi nào.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   KENYO Gửi mail hàng loạt C10V11 · Đức Lợi
+   Lịch sử: localStorage (key = KENYO_BULK_HISTORY)
+             + xuất/nhập file .js trên máy
+   Không còn gọi /bulk-history trên worker.
+───────────────────────────────────────────────────────────── */
+const WORKER_URL  = "https://kenyo-email.ducloibds.workers.dev";
+const BATCH_SIZE  = 8;
+const BATCH_PAUSE = 3000;
+const MIN_DELAY   = 1000;
+const LS_KEY      = "KENYO_BULK_HISTORY";   // localStorage key
+const MAX_HISTORY = 50;                       // giữ tối đa 50 bản
+
+const TYPE_LABELS = {
+  price:      "🏷️ Cập nhật giá",
+  video:      "🎥 Cập nhật video",
+  doc:        "📄 Cập nhật sổ/pháp lý",
+  product:    "🏠 Cập nhật sản phẩm",
+  newproduct: "🆕 Sản phẩm mới",
+};
+
+let leads        = [];
+let currentTab   = "manual";
+let isSending    = false;
+let historyCache = [];   // bản copy runtime, nguồn chân lý là localStorage
+
+/* ═══════════════════════════════════════════════════════════
+   LOCALSTORAGE HELPERS
+═══════════════════════════════════════════════════════════ */
+function lsLoad() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function lsSave(arr) {
+  try {
+    // Giữ mới nhất, cắt bớt nếu vượt MAX_HISTORY
+    const trimmed = arr.slice(0, MAX_HISTORY);
+    localStorage.setItem(LS_KEY, JSON.stringify(trimmed));
+  } catch (e) {
+    console.warn("localStorage đầy hoặc bị chặn:", e);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   XUẤT FILE .js
+   Format: const KENYO_HISTORY = [...]; (có thể nhập lại)
+═══════════════════════════════════════════════════════════ */
+function exportHistoryJs() {
+  if (historyCache.length === 0) {
+    alert("Chưa có lịch sử để xuất.");
+    return;
+  }
+  const ts   = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+  const body = `// Kenyo bulk-history export ${ts}\n// Nhập lại bằng nút "Chọn file" trong mục Lịch sử\nconst KENYO_HISTORY = ${JSON.stringify(historyCache, null, 2)};\n`;
+  const blob = new Blob([body], { type: "text/javascript;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `kenyo-history-${ts}.js`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NHẬP FILE .js
+   Đọc biến KENYO_HISTORY từ file xuất, merge vào localStorage
+═══════════════════════════════════════════════════════════ */
+function importHistoryJs(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      // Trích mảng JSON từ dòng const KENYO_HISTORY = [...];
+      const match = text.match(/const\s+KENYO_HISTORY\s*=\s*(\[[\s\S]*?\]);/);
+      if (!match) { alert("❌ File không đúng định dạng Kenyo history."); return; }
+      const imported = JSON.parse(match[1]);
+      if (!Array.isArray(imported)) { alert("❌ Dữ liệu trong file không hợp lệ."); return; }
+
+      // Merge: giữ bản ghi có ts khác nhau, ưu tiên ts mới hơn
+      const existing   = lsLoad();
+      const existingTs = new Set(existing.map(h => h.ts));
+      const newItems   = imported.filter(h => h.ts && !existingTs.has(h.ts));
+      const merged     = [...newItems, ...existing]
+        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+        .slice(0, MAX_HISTORY);
+
+      lsSave(merged);
+      historyCache = merged;
+      updateHistoryDot();
+      renderHistoryList();
+      alert(`✅ Đã nhập ${newItems.length} bản ghi mới (${imported.length - newItems.length} trùng bỏ qua).`);
+    } catch (err) {
+      alert("❌ Lỗi đọc file: " + err.message);
+    }
+    input.value = ""; // reset để có thể chọn lại cùng file
+  };
+  reader.readAsText(file, "UTF-8");
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HISTORY: MỞ / ĐÓNG SHEET
+═══════════════════════════════════════════════════════════ */
+function openHistorySheet() {
+  historyCache = lsLoad();
+  updateHistoryDot();
+  renderHistoryList();
+  document.getElementById('historySheet').classList.add('show');
+}
+
+function closeHistorySheet() {
+  document.getElementById('historySheet').classList.remove('show');
+}
+
+function updateHistoryDot() {
+  const dot = document.getElementById('histCountDot');
+  if (historyCache.length > 0) {
+    dot.style.display = 'inline-block';
+    dot.textContent   = historyCache.length;
+  } else {
+    dot.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER HISTORY LIST
+═══════════════════════════════════════════════════════════ */
+function renderHistoryList() {
+  const body = document.getElementById('historyBody');
+  if (historyCache.length === 0) {
+    body.innerHTML = '<div class="hist-empty">Chưa có lịch sử gửi nào.</div>';
+    return;
+  }
+  body.innerHTML = historyCache.map((h, i) => {
+    const d       = new Date(h.ts);
+    const timeStr = d.toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const typeLbl = TYPE_LABELS[h.type] || h.typeLabel || h.type || '—';
+    return `
+    <div class="hist-item" id="hist-item-${i}">
+      <div class="hist-item-top">
+        <div class="hist-item-type">${esc(typeLbl)}</div>
+        <div class="hist-item-time">${timeStr}</div>
+      </div>
+      ${h.note ? `<div class="hist-item-note">📝 ${esc(h.note)}</div>` : ''}
+      <div class="hist-item-meta">
+        👥 ${h.totalLeads || 0} người · <b>${h.okCount || 0} thành công</b>${h.errCount ? ` · <b class="err">${h.errCount} lỗi</b>` : ''}
+      </div>
+      ${h.link ? `<a class="hist-item-link" href="${esc(h.link)}" target="_blank">🔗 ${esc(h.link)}</a>` : ''}
+      <div class="hist-item-actions">
+        <button class="hist-action-btn use" onclick="useHistoryItem(${i})">↩️ Dùng lại</button>
+        <button class="hist-action-btn edit" onclick="toggleEditHistory(${i})">✏️ Sửa</button>
+        <button class="hist-action-btn del" onclick="deleteHistoryItem(${i})">🗑️ Xoá</button>
+      </div>
+      <div class="hist-edit-area" id="hist-edit-${i}">
+        <div class="field" style="margin-bottom:8px">
+          <label style="font-size:12px">Ghi chú</label>
+          <input type="text" id="edit-note-${i}" value="${escAttr(h.note || '')}">
+        </div>
+        <div class="field" style="margin-bottom:8px">
+          <label style="font-size:12px">Link BĐS</label>
+          <input type="text" id="edit-link-${i}" value="${escAttr(h.link || '')}">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label style="font-size:12px">Danh sách khách (SĐT, Tên, Email — mỗi dòng 1 người)</label>
+          <textarea id="edit-leads-${i}">${esc((h.leads||[]).map(l => `${l.phone}, ${l.name}, ${l.email}`).join('\n'))}</textarea>
+        </div>
+        <button class="hist-edit-save" onclick="saveHistoryEdit(${i})">💾 Lưu thay đổi</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleEditHistory(i) {
+  document.getElementById(`hist-edit-${i}`).classList.toggle('show');
+}
+
+/* Dùng lại 1 bản lịch sử → nạp thẳng vào form */
+function useHistoryItem(i) {
+  const h = historyCache[i];
+  if (!h) return;
+  document.getElementById('bdsLink').value   = h.link || '';
+  document.getElementById('sendNote').value  = h.note || '';
+  const radio = document.querySelector(`input[name="introType"][value="${h.type}"]`);
+  if (radio) radio.checked = true;
+  if (Array.isArray(h.leads) && h.leads.length) {
+    switchTab('manual');
+    document.getElementById('manualInput').value = h.leads.map(l => `${l.phone}, ${l.name}, ${l.email}`).join('\n');
+    parseList();
+  }
+  closeHistorySheet();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* Sửa inline — lưu thẳng localStorage */
+function saveHistoryEdit(i) {
+  const h = historyCache[i];
+  if (!h) return;
+  const note      = document.getElementById(`edit-note-${i}`).value.trim();
+  const link      = document.getElementById(`edit-link-${i}`).value.trim();
+  const leadsRaw  = document.getElementById(`edit-leads-${i}`).value.trim();
+  const leadsParsed = leadsRaw.split('\n').map(l => l.trim()).filter(Boolean)
+    .map(parseLine).filter(Boolean);
+
+  h.note       = note;
+  h.link       = link;
+  h.leads      = leadsParsed;
+  h.totalLeads = leadsParsed.length;
+  lsSave(historyCache);
+  renderHistoryList();
+}
+
+/* Xoá 1 bản — lưu lại localStorage ngay */
+function deleteHistoryItem(i) {
+  if (!confirm('Xoá bản lịch sử này? Không thể hoàn tác.')) return;
+  historyCache.splice(i, 1);
+  lsSave(historyCache);
+  updateHistoryDot();
+  renderHistoryList();
+}
+
+/* Lưu 1 bản mới vào đầu danh sách */
+function saveCurrentToHistory(note, link, type, typeLabel, sentLeads, okCount, errCount) {
+  const record = {
+    ts:         Date.now(),
+    note,
+    link,
+    type,
+    typeLabel,
+    leads:      sentLeads.map(l => ({ phone: l.phone, name: l.name, email: l.email })),
+    totalLeads: sentLeads.length,
+    okCount,
+    errCount,
+  };
+  historyCache = [record, ...lsLoad()].slice(0, MAX_HISTORY);
+  lsSave(historyCache);
+  updateHistoryDot();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB SWITCH
+═══════════════════════════════════════════════════════════ */
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabBtnManual').classList.toggle('active', tab === 'manual');
+  document.getElementById('tabBtnCsv').classList.toggle('active', tab === 'csv');
+  document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
+  document.getElementById('tab-csv').classList.toggle('active', tab === 'csv');
+  resetPreview();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PARSE DANH SÁCH
+═══════════════════════════════════════════════════════════ */
+function parseLine(line) {
+  const parts = line.split(',').map(s => s.trim());
+  if (parts.length < 3) return null;
+  const phone = parts[0];
+  const email = parts[parts.length - 1];
+  const name  = parts.slice(1, parts.length - 1).join(', ');
+  if (!phone) return null;
+  if (!email || !email.includes('@')) return null;
+  return { phone, name, email, status: 'pending', error: '' };
+}
+
+function parseList() {
+  let raw = currentTab === 'manual'
+    ? document.getElementById('manualInput').value.trim()
+    : (window._csvRaw || '');
+
+  if (!raw) { setValidateMsg('⚠️ Chưa có dữ liệu để xem trước.'); return; }
+
+  const lines     = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const dataLines = lines.filter(l => !/^(phone|sdt|số điện thoại|tel)/i.test(l.split(',')[0]));
+
+  const parsed = [];
+  const errors = [];
+  dataLines.forEach((line, i) => {
+    const lead = parseLine(line);
+    if (lead) parsed.push(lead);
+    else errors.push(`Dòng ${i + 1}: "${line}" — thiếu email hoặc sai format`);
+  });
+
+  if (parsed.length === 0) {
+    setValidateMsg('❌ Không tìm thấy dòng hợp lệ nào. Kiểm tra lại format: SĐT, Họ tên, Email');
+    return;
+  }
+
+  // Loại trùng
+  const seen    = new Set();
+  const deduped = [];
+  let dupCount  = 0;
+  for (const lead of parsed) {
+    const emailKey = lead.email.trim().toLowerCase();
+    const phoneKey = lead.phone.replace(/\D/g, '');
+    const dedupKey = emailKey || phoneKey;
+    if (dedupKey && seen.has(dedupKey)) { dupCount++; continue; }
+    if (dedupKey) seen.add(dedupKey);
+    deduped.push(lead);
+  }
+
+  leads = deduped;
+  const dupMsg = dupCount ? ` · ${dupCount} dòng trùng đã bỏ` : '';
+  setValidateMsg(
+    errors.length
+      ? `⚠️ ${deduped.length} dòng hợp lệ · ${errors.length} dòng bỏ qua${dupMsg}`
+      : `✅ ${deduped.length} khách sẵn sàng gửi${dupMsg}`
+  );
+  renderPreview();
+}
+
+function setValidateMsg(msg) { document.getElementById('validateMsg').textContent = msg; }
+
+function resetPreview() {
+  leads = [];
+  document.getElementById('previewWrap').classList.remove('show');
+  document.getElementById('previewBody').innerHTML = '';
+  setValidateMsg('');
+}
+
+function renderPreview() {
+  const tbody = document.getElementById('previewBody');
+  tbody.innerHTML = leads.map((l, i) => `
+    <tr id="row-${i}">
+      <td>${i + 1}</td><td>${esc(l.phone)}</td><td>${esc(l.name)}</td><td>${esc(l.email)}</td>
+      <td><span class="badge-pending" id="badge-${i}">Chờ</span></td>
+    </tr>`).join('');
+  document.getElementById('previewWrap').classList.add('show');
+}
+
+function updateBadge(i, status, errMsg) {
+  const badge = document.getElementById(`badge-${i}`);
+  if (!badge) return;
+  if (status === 'sending') { badge.className = 'badge-sending'; badge.textContent = 'Đang gửi...'; }
+  else if (status === 'ok') { badge.className = 'badge-ok';      badge.textContent = '✅ Xong'; }
+  else { badge.className = 'badge-err'; badge.title = errMsg || ''; badge.textContent = '❌ Lỗi'; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CSV FILE DROP
+═══════════════════════════════════════════════════════════ */
+document.getElementById('csvFile').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    window._csvRaw = e.target.result;
+    document.querySelector('#tab-csv .file-drop-text').innerHTML =
+      `<strong>✅ ${esc(file.name)}</strong> · ${Math.ceil(file.size/1024)}KB`;
+  };
+  reader.readAsText(file, 'UTF-8');
+});
+
+const fileDrop = document.getElementById('fileDrop');
+fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+fileDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  fileDrop.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    window._csvRaw = ev.target.result;
+    document.querySelector('#tab-csv .file-drop-text').innerHTML =
+      `<strong>✅ ${esc(file.name)}</strong> · ${Math.ceil(file.size/1024)}KB`;
+  };
+  reader.readAsText(file, 'UTF-8');
+});
+
+/* ═══════════════════════════════════════════════════════════
+   START SEND
+═══════════════════════════════════════════════════════════ */
+async function startSend() {
+  if (isSending) return;
+
+  const adminKey = document.getElementById('adminKey').value.trim();
+  if (!adminKey) { alert('Vui lòng nhập Admin Key.'); return; }
+  if (leads.length === 0) { alert('Bấm "Xem trước danh sách" trước khi gửi.'); return; }
+  const link = document.getElementById('bdsLink').value.trim();
+  if (!link) { alert('Vui lòng nhập Link BĐS.'); return; }
+  const typeRadio = document.querySelector('input[name="introType"]:checked');
+  const type      = typeRadio?.value;
+  if (!type) { alert('Vui lòng chọn loại giới thiệu.'); return; }
+  const typeLabel = TYPE_LABELS[type] || type;
+  const saveToKV  = document.getElementById('saveToKV').checked;
+  const note      = document.getElementById('sendNote').value.trim();
+
+  isSending = true;
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('progressCard').classList.add('show');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('progressCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Fetch nội dung BĐS 1 lần
+  let bdsContent    = '';
+  let fetchFailReason = '';
+  try {
+    document.getElementById('progressStatus').textContent = 'Đang lấy nội dung BĐS...';
+    const fetchRes = await fetch(`${WORKER_URL}/intro-fetch-content`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body:    JSON.stringify({ link }),
+    });
+    if (fetchRes.ok) {
+      const fetchData = await fetchRes.json();
+      bdsContent = fetchData.content || '';
+      if (!bdsContent) fetchFailReason = 'Trang BĐS không có nội dung để trích xuất (hoặc link sai).';
+    } else if (fetchRes.status === 401) {
+      fetchFailReason = 'Admin Key sai hoặc chưa đúng — không lấy được nội dung.';
+    } else {
+      fetchFailReason = `Worker trả lỗi (HTTP ${fetchRes.status}).`;
+    }
+  } catch (e) {
+    fetchFailReason = 'Lỗi kết nối tới worker khi lấy nội dung BĐS.';
+  }
+
+  if (!bdsContent) {
+    const proceed = confirm(
+      `⚠️ Không lấy được nội dung BĐS.\nLý do: ${fetchFailReason}\n\n` +
+      `Nếu tiếp tục, TOÀN BỘ ${leads.length} email sẽ được gửi mà KHÔNG có mô tả BĐS ` +
+      `(chỉ có link + câu giới thiệu mặc định).\n\nBấm OK để vẫn gửi, hoặc Cancel để dừng và kiểm tra link.`
+    );
+    if (!proceed) {
+      isSending = false;
+      document.getElementById('btnSend').disabled = false;
+      document.getElementById('progressCard').classList.remove('show');
+      return;
+    }
+  }
+
+  const total = leads.length;
+  let okCount = 0, errCount = 0, errList = [];
+
+  for (let i = 0; i < total; i++) {
+    const lead = leads[i];
+    updateProgress(i, total, okCount, errCount);
+    updateBadge(i, 'sending');
+    document.getElementById('progressStatus').textContent = `Đang gửi cho ${lead.name || lead.email}...`;
+
+    if (i > 0 && i % BATCH_SIZE === 0) {
+      document.getElementById('progressStatus').textContent = `Đang nghỉ 3s trước batch tiếp theo...`;
+      await sleep(BATCH_PAUSE);
+    }
+
+    const t0 = Date.now();
+    try {
+      const res = await fetch(`${WORKER_URL}/intro-bulk-one`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+        body:    JSON.stringify({ phone: lead.phone, name: lead.name, email: lead.email, link, content: bdsContent, type, saveToKV }),
+      });
+      const data    = await res.json();
+      const elapsed = Date.now() - t0;
+
+      if (res.ok && data.ok) {
+        okCount++; leads[i].status = 'ok'; updateBadge(i, 'ok');
+      } else {
+        errCount++; leads[i].status = 'err'; leads[i].error = data.error || 'Lỗi không xác định';
+        updateBadge(i, 'err', leads[i].error);
+        errList.push({ i: i + 1, email: lead.email, error: leads[i].error });
+      }
+
+      const remaining = MIN_DELAY - elapsed;
+      if (remaining > 0) await sleep(remaining);
+      const actualDelay = Math.max(elapsed, MIN_DELAY);
+      document.getElementById('progressSpeed').textContent =
+        `Tốc độ thực: ~${(actualDelay/1000).toFixed(1)}s/email · Dự kiến còn: ${etaStr(i + 1, total, actualDelay)}`;
+    } catch (err) {
+      errCount++; leads[i].status = 'err'; leads[i].error = 'Lỗi kết nối';
+      updateBadge(i, 'err', 'Lỗi kết nối');
+      errList.push({ i: i + 1, email: lead.email, error: 'Lỗi kết nối' });
+      await sleep(MIN_DELAY);
+    }
+  }
+
+  updateProgress(total, total, okCount, errCount);
+  document.getElementById('progressStatus').textContent = '✅ Hoàn tất!';
+  showResult(okCount, errCount, errList);
+  isSending = false;
+
+  // Lưu lịch sử vào localStorage (không chặn UI)
+  saveCurrentToHistory(note, link, type, typeLabel, leads, okCount, errCount);
+}
+
+function updateProgress(done, total, ok, err) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressText').textContent = `${done} / ${total} · ✅ ${ok}  ❌ ${err}`;
+  document.getElementById('progressPct').textContent  = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function etaStr(done, total, msPerEmail) {
+  const remaining = total - done;
+  const batches   = Math.floor(remaining / BATCH_SIZE);
+  const totalMs   = remaining * msPerEmail + batches * BATCH_PAUSE;
+  const mins      = Math.floor(totalMs / 60000);
+  const secs      = Math.round((totalMs % 60000) / 1000);
+  return mins > 0 ? `${mins} phút ${secs} giây` : `${secs} giây`;
+}
+
+function showResult(ok, err, errList) {
+  document.getElementById('resultOk').textContent  = ok;
+  document.getElementById('resultErr').textContent = err;
+  let detail = '';
+  if (errList.length > 0) {
+    detail = `<div style="font-size:13px;margin-bottom:10px;color:var(--text);font-weight:600">Email thất bại:</div>
+      <div style="font-size:12px;color:var(--red);line-height:1.8">` +
+      errList.map(e => `#${e.i} ${esc(e.email)} — ${esc(e.error)}`).join('<br>') + '</div>';
+  }
+  document.getElementById('errorDetail').innerHTML = detail;
+  document.getElementById('resultCard').classList.add('show');
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAll() {
+  leads = []; isSending = false;
+  document.getElementById('manualInput').value = '';
+  document.getElementById('bdsLink').value     = '';
+  document.getElementById('sendNote').value    = '';
+  window._csvRaw = '';
+  resetPreview();
+  document.getElementById('progressCard').classList.remove('show');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('btnSend').disabled      = false;
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressStatus').textContent = '';
+  document.getElementById('progressSpeed').textContent  = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function esc(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
+
+/* ═══════════════════════════════════════════════════════════
+   INIT: đọc lịch sử từ localStorage khi tải trang
+═══════════════════════════════════════════════════════════ */
+(function init() {
+  historyCache = lsLoad();
+  updateHistoryDot();
+})();
+</script>
+</body>
+</html>
