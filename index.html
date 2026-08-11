@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gửi mail hàng loạt C15V17 · Đức Lợi</title>
+<title>Gửi mail hàng loạt C15V18 · Đức Lợi</title>
+<!-- PWA -->
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kenyo Gửi mail">
+<link id="pwa-manifest" rel="manifest">
+<link id="apple-touch-icon" rel="apple-touch-icon">
 <style>
   :root{
     --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3248;
@@ -294,7 +302,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-text">
-      <h1>✦ Gửi mail hàng loạt C15V17</h1>
+      <h1>✦ Gửi mail hàng loạt C15V18</h1>
       <p>Kenyo · Đức Lợi</p>
     </div>
     <button class="btn-history-top" onclick="openHistorySheet()">
@@ -451,13 +459,13 @@
 
 <script>
 /* ─────────────────────────────────────────────────────────────
-   KENYO Gửi mail hàng loạt C15V17 · Đức Lợi
+   KENYO Gửi mail hàng loạt C15V18 · Đức Lợi
    Lịch sử: localStorage (cache offline)
            + KV Cloud qua Dongbomokhoa worker (đồng bộ đa thiết bị)
    Chiến lược: sau mỗi lần gửi → save lên cloud ngay
                khi mở sheet  → auto sync từ cloud về local
    ─────────────────────────────────────────────────────────────
-   Bản vá C15V17-p1:
+   Bản vá C15V18-p1:
    [1] CLOUD_KEY tách riêng hoàn toàn — ô "Cloud Sync Key" riêng
        lưu vào sessionStorage, getCloudKey() KHÔNG fallback về
        adminKey gửi mail. Hai key độc lập nhau hoàn toàn.
@@ -593,7 +601,7 @@ function importHistoryJs(input) {
 
 /* ═══════════════════════════════════════════════════════════
    CLOUD SYNC HELPERS
-   Bản vá C15V17-p1:
+   Bản vá C15V18-p1:
    [1] CLOUD_KEY tách riêng khỏi adminKey gửi mail
    [2] Tombstone khi xoá — tránh resurrect bug
    [3] Xử lý đúng 401 và 403 (blacklist)
@@ -1250,6 +1258,59 @@ function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
   historyCache = lsLoad();
   updateHistoryDot();
   restoreCloudKeyUI(); // khôi phục trạng thái ô cloud key nếu đã lưu
+})();
+
+// ── PWA: Manifest + Service Worker (copy pattern từ Dangtin_c6v43.html) ──
+(function initPWA(){
+  function makeIconDataURL(size,cb){
+    var c=document.createElement('canvas');
+    c.width=c.height=size;
+    var ctx=c.getContext('2d');
+    ctx.fillStyle='#0f1117';
+    ctx.beginPath();ctx.roundRect(0,0,size,size,size*0.18);ctx.fill();
+    ctx.strokeStyle='#10b981';ctx.lineWidth=size*0.06;
+    ctx.beginPath();ctx.arc(size/2,size*0.4,size*0.28,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#e8eaf0';ctx.font='bold '+Math.round(size*0.28)+'px -apple-system,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('K',size/2,size*0.4);
+    ctx.fillStyle='#10b981';ctx.font='bold '+Math.round(size*0.11)+'px -apple-system,sans-serif';
+    ctx.fillText('\u0110\u1ee9c L\u1ee3i',size/2,size*0.68);
+    ctx.fillStyle='#7b82a0';ctx.font=Math.round(size*0.09)+'px -apple-system,sans-serif';
+    ctx.fillText('C15V18',size/2,size*0.82);
+    cb(c.toDataURL('image/png'));
+  }
+  makeIconDataURL(192,function(dataUrl192){
+    makeIconDataURL(512,function(dataUrl512){
+      var manifest={
+        name:'Kenyo G\u1eedi mail h\u00e0ng lo\u1ea1t C15V18',
+        short_name:'Kenyo Mail',
+        description:'G\u1eedi email gi\u1edbi thi\u1ec7u h\u00e0ng lo\u1ea1t cho kh\u00e1ch \u2014 Kenyo \u0110\u1ee9c L\u1ee3i',
+        start_url:location.href,
+        display:'standalone',
+        orientation:'portrait',
+        background_color:'#0f1117',
+        theme_color:'#0f1117',
+        lang:'vi',
+        icons:[
+          {src:dataUrl192,sizes:'192x192',type:'image/png',purpose:'any maskable'},
+          {src:dataUrl512,sizes:'512x512',type:'image/png',purpose:'any maskable'}
+        ]
+      };
+      var mBlob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+      document.getElementById('pwa-manifest').href=URL.createObjectURL(mBlob);
+      var ati=document.getElementById('apple-touch-icon');
+      if(ati)ati.href=dataUrl192;
+    });
+  });
+  // Service Worker — chỉ đăng ký nếu /sw.js thật sự tồn tại trên server
+  // (giống Dangtin_c6v43.html — trang admin dùng blob/local nên thường không có SW)
+  if('serviceWorker' in navigator){
+    fetch('/sw.js',{method:'HEAD'}).then(function(r){
+      if(r.ok){
+        navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){});
+      }
+    }).catch(function(){});
+  }
 })();
 </script>
 </body>
